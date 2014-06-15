@@ -1,0 +1,5 @@
+#!/bin/sh
+rm -f ros.bin
+#rm -f /cygdrive/c/Users/yezq/ros.bin
+make -j8
+#cp -f ros.bin /cygdrive/c/Users/yezq/ros.bin

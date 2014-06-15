@@ -1,0 +1,21 @@
+
+/* for every user task, we malloc 8k svc mode stack, it's use for irq handler and 
+ * task switch, so irq handler must not use big auto variables, it may crash the 
+ * svc mode stack.
+ */
+unsigned char OSUserTaskCreate(void (*task)(void *pd), void *pdata, OS_STK *ptos, INT8U prio)
+{
+	OSTaskCreate();
+
+}
+
+
+/* XXX call free(pbos) in void OSTaskDelHook(OS_TCB *ptcb)
+ *    ptcb->OSTCBStkBottom = pbos; 
+ */
+unsigned char OSUserTaskDelete(unsigned char prio)
+{
+
+
+}
+

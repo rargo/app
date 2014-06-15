@@ -1,0 +1,62 @@
+#include "ucos.h"
+#include <base.h>
+#include <serial.h>
+#include <timer.h>
+
+unsigned  int  task1_stk[1024];
+unsigned  int  task2_stk[1024];
+unsigned  int  task3_stk[1024];
+
+void task1(void *pdata)
+{
+	int i;
+    while(1)
+    {
+    	for(i=0; i<15; i++)
+        	dprintf("task1,%s\r\n",pdata);
+		OSTimeDly(2);
+    	OSTaskSuspend(OS_PRIO_SELF);
+    }
+}
+
+void task2(void *pdata)
+{
+    while(1)
+    {
+		dprintf("task2,%s\r\n",pdata);
+	    OSTaskSuspend(OS_PRIO_SELF);
+	    OSTaskResume(9);
+    }
+}
+
+void task3(void *pdata)
+{
+    while(1)
+    {
+        dprintf("task3,%s\r\n",pdata);
+        OSTaskResume(10);
+    }
+}
+
+unsigned int debug_enable = 0;
+
+void ucos_test(void)
+{
+	char *str1 = "!";
+	char *str2 = "?";
+
+
+    OSInit();
+	sys_timer_start();
+	/*install os timer*/
+    OSTaskCreate(task1,(void *)str1,&task1_stk[1024],9);
+    OSTaskCreate(task2,(void *)str2,&task2_stk[1024],10);
+    OSTaskCreate(task3,(void *)"*",&task3_stk[1024],11);
+    //debug_enable = 1;
+    OSStart();
+	
+    while(1)
+    {
+        dprintf("os runtime error");
+    }
+}

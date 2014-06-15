@@ -1,0 +1,179 @@
+
+;;;;;;;;ucos port,task save context,from top to bottom:pc,lr,r12,r11......r0,cpsr
+
+    global os_enter_critical
+    global os_exit_critical
+    global OS_TASK_SW
+    global OSStartHighRdy
+    global int_switch_task
+
+    extern OSTCBCur
+    extern OSPrioCur
+    extern OSTCBHighRdy
+    extern OSPrioHighRdy
+    extern OSRunning
+    extern OSTaskSwHook
+    extern OSIntEnter
+    extern OSIntExit
+    extern os_need_reschedule
+    extern printf_save_task_stack
+    extern printf_restore_task_stack
+
+    AREA    SelfBoot, CODE, READONLY
+os_enter_critical
+    mrs    r1,cpsr
+    mov    r2,r1
+    orr    r1,r1,#0xc0    
+    msr    cpsr_c,r1
+    str    r2,[r0]
+    mov    pc,lr
+
+
+os_exit_critical
+    msr    cpsr_c,r0
+    mov    pc,lr
+
+
+    ;switch task in sys mode
+OS_TASK_SW
+    stmfd   r13!,{lr};save function lr as current task pc
+    stmfd   r13!,{r0-r12,lr};save r0-r12,save function lr as current task lr
+    mrs     r0,cpsr
+    stmfd   r13!,{r0};save current task cpsr
+       
+    ;mov     r0,r13
+    ;ldr     r3,=OSPrioCur
+    ;ldrb    r1,[r3]
+    ;bl      printf_save_task_stack
+
+    ldr     r0,=OSTCBCur
+    ldr     r1,[r0];r1 = OSTCBCur
+    str     r13,[r1];update OSTCBCur->OSTCBStkPtr to current stack pointer
+
+    bl      OSTaskSwHook
+
+    b       switch_to_new_task
+    ltorg
+
+    extern os_start_high_rdy
+    ;use only once,OSStart call OSStartHighRdy to run the highest priority task
+OSStartHighRdy
+    stmfd   r13!,{lr}
+
+    ;bl      os_start_high_rdy
+    bl      OSTaskSwHook
+
+    ;debug task switch
+    ;ldr     r0,=OSTCBCur
+    ;ldr     r1,[r0];r1 = OSTCBCur
+    ;ldr     r0,[r1];r0 = sp
+    ;ldr        r3,=OSPrioCur
+    ;ldrb    r1,[r3]
+    ;bl      printf_save_task_stack
+
+    ldmfd   r13!,{lr}
+
+    ldr     r0,=OSRunning
+    mov     r1,#1
+    str     r1,[r0];OSRunning = 1
+
+    b       restore_new_task
+    ltorg
+
+    extern printf_task_switch
+;int_switch_task_mesg string "int switch task\x00"
+
+    ;note:before call this task,irq stack must only push spsr,r0-r3,r12,lr
+int_switch_task    
+
+    ;stmfd   r13!,{r0-r3,r12,lr}
+    ;bl      printf_task_switch
+    ;ldmfd   r13!,{r0-r3,r12,lr}
+
+    ;save current task,we push spsr,r0-r3,r12,lr when entered irq.
+    stmfd   r13!,{r13}^;load current task sys/usr stack pointer r13
+    ldmfd   r13!,{r3};r3 = current task tack pointer(sys/usr r13)
+
+    ldr     r1,[r13,#24];load irq lr from irq stack
+    stmfd   r3!,{r1};save irq lr as task pc
+    stmfd   r3!,{lr}^;save task sys/usr lr
+
+    ldr     r2,[r13,#20];load r12 from irq stack
+    stmfd   r3!,{r2};save current task r12
+    
+    ;r4-r11 must not change in irq routines
+    stmfd   r3!,{r4-r11};save current task r4-r11
+
+    mov     r11,r3;r11 = current task sys/use r13
+
+    ldmfd   r13!,{r0};load spsr from stack
+    mov     r4,r0
+
+    ldmfd   r13!,{r0-r3,r12,lr};load r0-r3 from irq stack,irq stack is balance now
+    stmfd   r11!,{r0-r3};save current task r0-r3
+
+    stmfd   r11!,{r4};save spsr as current task cpsr
+
+    ldr     r0,=OSTCBCur;r0 = &OSTCBCur
+    ldr     r1,[r0];r1 = OSTCBCur
+    str     r11,[r1];OSTCBcur->OSTCBStkPtr = r11,update current task stack pointer
+
+    ;debug task switch
+    ;ldr     r0,=OSTCBCur
+    ;ldr     r1,[r0];r1 = OSTCBCur
+    ;ldr     r0,[r1];r0 = sp
+    ;ldr        r3,=OSPrioCur
+    ;ldrb    r1,[r3]
+    ;bl      printf_save_task_stack
+
+switch_to_new_task
+    ;update OSTCBCur,OSPrioCur
+    ldr    r0,=OSTCBCur;
+    ldr    r1,=OSPrioCur;    OSTCBCur = OSTCBHighRdy;
+    ldr    r2,=OSTCBHighRdy;    OSPrioCur = OSPrioHighRdy;
+    ldr    r3,=OSPrioHighRdy
+    ldr    r4,[r2]
+    str    r4,[r0]
+    ldrb    r5,[r3]
+    strb    r5,[r1]
+
+
+    ;switch to sys mode,restore task
+    ;note:1,the last two instruction cann't be replace with one "ldm r13!,{r0-r12,lr,pc}^"
+    ;       see arm instruction list
+    ;     2,if we use sys mode to restore register,instruction would be like these:
+    ;              mrs     r2,cpsr
+    ;              orr     r3,r2,#0x1f
+    ;              msr     cpsr_c,r3
+    ;              ldmfd   r13!,{r0};
+    ;              msr       cpsr,r0;note!!!,irq enable now,if interrupt happens here,than program would crash!!!
+    ;              ldmf    r13!,{r0-r12,lr,pc};
+restore_new_task
+    ldr     r0,=OSTCBHighRdy
+    ldr     r2,[r0];
+    ldr     r1,[r2];r1 = OSTCBCur->OSTCBStkPtr,load new task stack pointer
+
+    mrs     r2,cpsr;r2 = cpsr
+
+    orr     r3,r2,#0x1f;switch to sys mode
+    msr     cpsr_c,r3
+    add     r13,r1,#64;update sys/usr mode stack pointer r13
+
+    bic     r3,r2,#0x1f
+    orr     r3,r3,#0x1b;switch to undef mode,we don't use undef mode,so we can use it's stack pointer to restore task
+    msr     cpsr_c,r3
+    mov     r13,r1;undef r13 = OSTCBCur->OSTCBStkPtr
+
+    ;mov     r0,r13
+    ;ldr     r3,=OSPrioHighRdy
+    ;ldrb    r1,[r3]
+    ;bl      printf_restore_task_stack
+
+    ldmfd    r13!,{r0};load cpsr from new task stack
+    msr      spsr_fsxc,r0;
+    ldmfd    r13!,{r0-r12,lr}^;restore sys/usr mode register
+    ldmfd    r13!,{pc}^;restore pc,spsr to cpsr,run in sys mode
+    ltorg
+    
+    end
+

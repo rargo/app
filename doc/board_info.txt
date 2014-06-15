@@ -1,0 +1,20 @@
+
+vic configure:
+set vic0 daisy priority to 8 
+from high to low,priority sequence is: 
+	vic0 priority 0~7;
+	vic1 priority 0~15,vic0 priority 8;
+	vic0 9~15
+
+uart0: terminal used
+
+irq priority:
+	eint0~3: 3
+	eint4_11: 5
+	eint12_19: 6
+	eint20_27: 7
+
+	uart1: 8
+	uart2: 8
+	uart3: 8
+

@@ -1,0 +1,12 @@
+一个任务的用到的所有寄存器(task context registers):
+	r0-r12, r13_usr, r14_usr, r13_svc,r14_svc, cpsr
+
+只允许任务切换发生在svc模式中，简化任务切换保存状态：
+1. 调用任务切换为函数调用,编译器按照ATPC标准，在调用函数前，会自动保存r0-r3，r12，所以任务切换时不需要保存这些
+2. 由于ucos任务初始化时将R0作为任务的参数void task(void *arg),所以这里也需要保存下R0，作为任务的寄存器
+OSIntCtxSw:
+OS_TASK_SW:	
+	保存r4-r11，r13_usr,r14_usr,cpsr, r14_svc(OSIntCtxSw，OS_TASK_SW return address),r13_svc(保存至任务结构中的堆栈指针)
+	
+irq处理:
+	r0-r3,r12,
