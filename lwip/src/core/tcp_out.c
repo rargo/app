@@ -962,7 +962,6 @@ tcp_output(struct tcp_pcb *pcb)
   /* data available and window allows it to be sent? */
   while (seg != NULL &&
          ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len <= wnd) {
-         RDIAG(LEGACY_DEBUG);
     LWIP_ASSERT("RST not expected here!", 
                 (TCPH_FLAGS(seg->tcphdr) & TCP_RST) == 0);
     /* Stop sending if the nagle algorithm would prevent it
@@ -992,19 +991,16 @@ tcp_output(struct tcp_pcb *pcb)
       pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
     }
 
-	RDIAG(LEGACY_DEBUG);
 #if TCP_OVERSIZE_DBGCHECK
     seg->oversize_left = 0;
 #endif /* TCP_OVERSIZE_DBGCHECK */
     tcp_output_segment(seg, pcb);
-	RDIAG(LEGACY_DEBUG);
     snd_nxt = ntohl(seg->tcphdr->seqno) + TCP_TCPLEN(seg);
     if (TCP_SEQ_LT(pcb->snd_nxt, snd_nxt)) {
       pcb->snd_nxt = snd_nxt;
     }
     /* put segment on unacknowledged list if length > 0 */
     if (TCP_TCPLEN(seg) > 0) {
-		RDIAG(LEGACY_DEBUG);
       seg->next = NULL;
       /* unacked list is empty? */
       if (pcb->unacked == NULL) {
@@ -1012,7 +1008,6 @@ tcp_output(struct tcp_pcb *pcb)
         useg = seg;
       /* unacked list is not empty? */
       } else {
-      RDIAG(LEGACY_DEBUG);
         /* In the case of fast retransmit, the packet should not go to the tail
          * of the unacked queue, but rather somewhere before it. We need to check for
          * this case. -STJ Jul 27, 2004 */
@@ -1033,7 +1028,6 @@ tcp_output(struct tcp_pcb *pcb)
       }
     /* do not queue empty segments on the unacked list */
     } else {
-    RDIAG(LEGACY_DEBUG);
       tcp_seg_free(seg);
     }
     seg = pcb->unsent;
@@ -1045,7 +1039,6 @@ tcp_output(struct tcp_pcb *pcb)
   }
 #endif /* TCP_OVERSIZE */
 
-	RDIAG(LEGACY_DEBUG);
   pcb->flags &= ~TF_NAGLEMEMERR;
   return ERR_OK;
 }
