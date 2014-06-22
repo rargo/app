@@ -7,6 +7,12 @@
 *.depend
 *.a
 *.swp
+depend
+tags
+GTAGS
+GRTAGS
+GPATH
+GSYMS
 examples/hello_world
 examples/hello_world.srec
 include/asm
