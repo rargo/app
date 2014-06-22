@@ -22,7 +22,7 @@ sio_t sio[MAX_SIO_CHANNEL];
  */
 void pppLinkStatusCallBack(void *ctx, int errCode, void *arg)
 {
-	RDIAG(LEGACY_DEBUG,"errCode:%d",errCode);
+	RDIAG(SIO_DEBUG,"errCode:%d",errCode);
 	
 	switch(errCode) 
 	{
@@ -66,7 +66,7 @@ void sio_send(u8_t c, sio_fd_t fd)
 		return;
 	}
 
-	RDIAG(LEGACY_DEBUG);
+	RDIAG(SIO_DEBUG);
 	ret = uart_tx_sleep(s->channel,(char *)&c,1);
 	if(ret < 0) {
 		RERR("ret:%d",ret);
@@ -86,7 +86,7 @@ u8_t sio_recv(sio_fd_t fd)
 	char c = '\0';
 	int recv_len;
 	
-	RDIAG(LEGACY_DEBUG);
+	RDIAG(SIO_DEBUG);
 
 	if(fd == NULL) {
 		RERR();
@@ -117,7 +117,7 @@ u32_t sio_read(sio_fd_t fd, u8_t *data, u32_t len)
 	int recv_len;
 	sio_t *s = (sio_t *)fd;
 	
-	RDIAG(LEGACY_DEBUG);
+	RDIAG(SIO_DEBUG);
 
 	if(fd == NULL) {
 		RERR();
@@ -145,7 +145,7 @@ u32_t sio_tryread(sio_fd_t fd, u8_t *data, u32_t len)
 {
 	sio_t *s = (sio_t *)fd;
 	
-	RDIAG(LEGACY_DEBUG);
+	RDIAG(SIO_DEBUG);
 
 	return uart_rx(s->channel, (char *)data, len);
 }
@@ -166,10 +166,10 @@ u32_t sio_write(sio_fd_t fd, u8_t *data, u32_t len)
 	int sent_len = 0;
 	sio_t *s = (sio_t *)fd;
 
-	RDIAG(LEGACY_DEBUG,"write %d bytes",len);
+	RDIAG(SIO_DEBUG,"write %d bytes",len);
 	
 	ret = uart_tx_sleep(s->channel,(char *)data, len);
-	RDIAG(LEGACY_DEBUG,"uart %d ret:%d", s->channel, ret);
+	RDIAG(SIO_DEBUG,"uart %d ret:%d", s->channel, ret);
 	if(ret < 0) {
 		RERR("ret:%d",ret);
 		return 0;
@@ -187,6 +187,6 @@ void sio_read_abort(sio_fd_t fd)
 {
 	sio_t *s = (sio_t *)fd;
 
-	RDIAG(LEGACY_DEBUG,"uart_sleep_abort(%d)",s->channel);
+	RDIAG(SIO_DEBUG,"uart_sleep_abort(%d)",s->channel);
 	uart_sleep_abort(s->channel);
 }

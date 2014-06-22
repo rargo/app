@@ -1,5 +1,6 @@
 #!/bin/sh
 rm -f ros.bin
-#rm -f /cygdrive/c/Users/yezq/ros.bin
+rm -f /srv/tftp/ros.bin
 make -j8
-#cp -f ros.bin /cygdrive/c/Users/yezq/ros.bin
+cp -af ros.bin /srv/tftp/ros.bin
+ls -l ros.bin /srv/tftp/ros.bin
