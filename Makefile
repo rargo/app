@@ -16,7 +16,7 @@ BIN_FLAGS = -O binary -o
 #LIBS += /usr/local/arm/4.5.1/bin/../lib/gcc/arm-none-linux-gnueabi/4.5.1/libgcc.a
 #LIBS = $(shell `$(CC) -print-libgcc-file-name`)
 #LIBS += -L /usr/local/arm/4.5.1/arm-none-linux-gnueabi/sys-root/usr/lib -lc
-LIBS = libgcc.a
+LIBS = libgcc.a #TODO urgly, use portable ways
 
 WARN_FLAGS = -Wall 
 WARN_FLAGS += -Wno-attributes #remove pack warning on uint8 etc
@@ -63,8 +63,8 @@ bin:$(TARGET).elf
 	$(STRIP) $(TARGET).elf $(BIN_FLAGS) $(TARGET).bin
 
 $(TARGET).elf: $(OBJ_ALL)
-	@echo "lib:$(LIB)"
-	@echo "LDFLAGS:$(LDFLAGS)"
+#	@echo "lib:$(LIB)"
+#	@echo "LDFLAGS:$(LDFLAGS)"
 	$(LD) $(LDFLAGS) -o $@ $+ $(LIBS)
 	$(OBJDUMP) -d -S $@ > $(TARGET).asm
 
@@ -78,15 +78,16 @@ $(OBJ_DIR)/%.o:%.s
 	@echo ASM $<
 	@$(CC) $(CFLAGS) $< -o $@
 
-#depend: Makefile $(SRCS)
-	##echo $(SRCS)
-	#rm -f $@
-	#for f in $(SRCS); do \
-		#g=`echo $$f | sed -e 's/\(.*\)\.\w/\1.o/'`; \
-		#$(CC) -M $(CFLAGS) -MQ $(OBJ_DIR)/$$g $$f >> $@ ; \
-	#done
+#create header file dependency
+depend: Makefile $(SRCS)
+	#echo $(SRCS)
+	rm -f $@
+	for f in $(SRCS); do \
+		g=`echo $$f | sed -e 's/\(.*\)\.\w/\1.o/'`; \
+		$(CC) -M $(CFLAGS) -MQ $(OBJ_DIR)/$$g $$f >> $@ ; \
+	done
 
-#sinclude depend
+sinclude depend
 
 echo_target:
 #@echo "asm objects: $(SRC_ASM)"

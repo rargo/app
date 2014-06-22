@@ -1221,7 +1221,7 @@ static ip_addr_t eth_ipaddr, eth_netmask, eth_gw;
 void lwip_dm9000_init(void)
 {
 	IP4_ADDR(&eth_gw, 192,168,1,1);
-	IP4_ADDR(&eth_ipaddr, 192,168,1,100);
+	IP4_ADDR(&eth_ipaddr, 192,168,1,120);
 	IP4_ADDR(&eth_netmask, 255,255,255,0);
 
 #if 0

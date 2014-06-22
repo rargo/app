@@ -170,7 +170,9 @@ int main(void)
 	OSInit();
 	/* lwip initial */
 	tcpip_init(NULL, NULL);
-	/* add eth(dm9000) interface,initial dm9000 */
+	/* add eth(dm9000) interface,initial dm9000, set ip address,
+	 * gateway, netmask
+	 */
 	lwip_dm9000_init();
 	//OSTimeDly(100);
 	error = OSTaskCreate(ethernet_test_thread, NULL, (OS_STK *)&thread_stack[64*1024], 15); //prio: 30
@@ -199,9 +201,8 @@ void loop_task(void *arg)
 		RDIAG(LEGACY_DEBUG,"lwip recv ret:%d",ret);
 
 		if(ret > 0) {
-			lwip_send(loop_socket, buf, ret, 0);
-			buf[ret] = 0;
-			RDIAG(LEGACY_DEBUG,"lwip recv %d bytes",ret);
+			ret = lwip_send(loop_socket, buf, ret, 0);
+			RDIAG(LEGACY_DEBUG,"lwip send %d bytes",ret);
 			//RDIAG(LEGACY_DEBUG,"lwip recv: %s\r\n",buf);
 		} else {
 #if 1
@@ -265,7 +266,7 @@ void lwip_test(void)
 	test_ip.sin_family = AF_INET;
 	//test_ip.sin_port = htons((21));
 	test_ip.sin_port = htons((80));
-	IP4_ADDR(&ipaddr, 192,168,1,100);
+	IP4_ADDR(&ipaddr, 192,168,1,120);
 	inet_addr_from_ipaddr(&test_ip.sin_addr, &ipaddr);
 	memset(test_ip.sin_zero, 0, SIN_ZERO_LEN);
 
@@ -305,6 +306,7 @@ void lwip_test(void)
 		}
 #else
 		if(cur_task >= MAX_LOOP_TASK) {
+			RDIAG(LEGACY_DEBUG,"MAX LOOP TASK REACH, close listen socket");
 			RERR("MAX_TASK is %d",MAX_LOOP_TASK);
 			lwip_close(s_new);
 			lwip_close(s);
