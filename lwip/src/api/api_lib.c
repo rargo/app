@@ -71,17 +71,14 @@ netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto, netconn_cal
   struct api_msg msg;
 
   conn = netconn_alloc(t, callback);
-  RDIAG(LEGACY_DEBUG);
   LWIP_ERROR("netconn_alloc fail", conn != NULL, return conn);
   if (conn != NULL) {
     err_t err;
-	RDIAG(LEGACY_DEBUG);
     msg.msg.msg.n.proto = proto;
     msg.msg.conn = conn;
     TCPIP_APIMSG((&msg), lwip_netconn_do_newconn, err);
 	//LWIP_ERROR("TCPIP_APIMSG fail", err != ERR_OK, return NULL);
     if (err != ERR_OK) {
-	RDIAG(LEGACY_DEBUG);
       LWIP_ASSERT("freeing conn without freeing pcb", conn->pcb.tcp == NULL);
       LWIP_ASSERT("conn has no op_completed", sys_sem_valid(&conn->op_completed));
       LWIP_ASSERT("conn has no recvmbox", sys_mbox_valid(&conn->recvmbox));
