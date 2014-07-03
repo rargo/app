@@ -103,6 +103,9 @@ void free(void *mem);
 
 #define LEGACY_DEBUG ROS_DEBUG_ON
 
+//#define WL_DEBUG ROS_DEBUG_OFF
+#define WL_DEBUG ROS_DEBUG_ON
+
 /* debug ppp serial port */
 #define SIO_DEBUG ROS_DEBUG_OFF
 

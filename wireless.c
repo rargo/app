@@ -3,6 +3,9 @@
 
 #define WL_CHANNEL 3
 
+#define WL_NOT_CONNECT  -1
+#define WL_NOT_CMD_MODE -2
+
 int wl_command(char *in, char *out, int timeout)
 {
 	char buf[256];
@@ -10,7 +13,7 @@ int wl_command(char *in, char *out, int timeout)
 	int len;
 	int j;
 
-	RDIAG(LEGACY_DEBUG,"wl command:%s", in);
+	RDIAG(WL_DEBUG,"WL COMMAND:%s", in);
 
 	uart_tx_str(WL_CHANNEL, in);
 	while(!uart_tx_finish(WL_CHANNEL))
@@ -44,10 +47,10 @@ int wl_command(char *in, char *out, int timeout)
 	}
 	buf[len] = '\0';
 
-	RDIAG(LEGACY_DEBUG,"wl response[%d]:%s", len, buf);
+	RDIAG(WL_DEBUG,"WL RESPONSE[%d]:%s", len, buf);
 	/* check response */
 	if(strstr(buf, out) != NULL) {
-		RDIAG(LEGACY_DEBUG,"success"); 
+		RDIAG(WL_DEBUG,"success"); 
 		return 0;
 	} else {
 		//RERR("fail"); 
@@ -56,16 +59,12 @@ int wl_command(char *in, char *out, int timeout)
 	}
 }
 
-int wl_init(void)
-{
-	return 0;
-}
-
+/* connect gprs */
 int wl_connect(void)
 {
 	int ret;
 	ret = uart_open(WL_CHANNEL, 115200, 8, 'n', 1);
-	RDIAG(LEGACY_DEBUG,"uart open %d ret:%d",WL_CHANNEL, ret);
+	RDIAG(WL_DEBUG,"uart open %d ret:%d",WL_CHANNEL, ret);
 
 	wl_command("ATE0\r", "OK", 0);
 	wl_command("ATS0=0\r", "OK", 0);
@@ -77,3 +76,91 @@ int wl_connect(void)
 	uart_close(WL_CHANNEL);
 	return 0;
 }
+
+/* when disconnect, how can we shutdown all sockets??? */
+int wl_disconnect(void)
+{
+
+}
+
+#define UNKNOWN_MODE -1
+#define CMD_MODE 0
+#define DATA_MODE 1
+static int wl_mode = UNKNOWN_MODE;
+static int wl_mode_get(void)
+{
+
+}
+
+static int wl_mode_switch(int mode)
+{
+
+
+}
+
+//return 0 if no more message
+//must in cmd_mode
+int wl_read_message(unsigned char *buf, int len)
+{
+
+	return 0; 
+}
+
+int wl_write_message(char *number, char *buf, int len)
+{
+
+}
+
+// read signal level
+int  wl_read_signal(void)
+{
+
+}
+
+// enable or disable auto answer
+int wl_auto_answer(int auto_answer)
+{
+
+}
+
+// answer phone call
+int wl_answer(void)
+{
+
+}
+
+// dial number
+int wl_dial(char *number, int timeout)
+{
+
+}
+
+// handoff call
+int wl_handoff(void)
+{
+
+}
+
+// set call volume
+int wl_set_vol(int vol)
+{
+
+}
+
+// wireless thread, control wireless status change
+// process wl command
+// will disconnect data link every 5 seconds
+// check if there's incoming message
+// if incomming call interrupt data link
+// reconnect it
+void wl_thread(void *arg)
+{
+
+}
+
+int wl_init(void)
+{
+	/* create wireless thread */
+	return 0;
+}
+
