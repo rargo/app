@@ -40,12 +40,7 @@ void pppLinkStatusCallBack(void *ctx, int errCode, void *arg)
  */
 sio_fd_t sio_open(u8_t devnum)
 {
-	if(uart_open(devnum, 115200, 8, 'n', 1))
-		return NULL;
-
-	sio[devnum].channel = devnum;
-
-	return &sio[devnum];
+	return wl_sio_open(devnum);
 }
 
 /**
@@ -56,21 +51,10 @@ sio_fd_t sio_open(u8_t devnum)
  * 
  * @note This function will block until the character can be sent.
  */
+//only slipif.c need this function
 void sio_send(u8_t c, sio_fd_t fd)
 {
-	sio_t *s = (sio_t *)fd;
-	int ret;
-
-	if(fd == NULL) {
-		RERR();
-		return;
-	}
-
-	RDIAG(SIO_DEBUG);
-	ret = uart_tx_sleep(s->channel,(char *)&c,1);
-	if(ret < 0) {
-		RERR("ret:%d",ret);
-	}
+	//return wl_sio_send(c, fd);
 }
 
 /**
@@ -80,25 +64,11 @@ void sio_send(u8_t c, sio_fd_t fd)
  * 
  * @note This function will block until a character is received.
  */
+//no caller found?!!
 u8_t sio_recv(sio_fd_t fd)
 {
-	sio_t *s = (sio_t *)fd;
-	char c = '\0';
-	int recv_len;
-	
-	RDIAG(SIO_DEBUG);
-
-	if(fd == NULL) {
-		RERR();
-		return 0;
-	}
-	
-	recv_len = uart_rx_sleep(s->channel, &c, 1);
-	if(recv_len < 0) {
-		RERR("recv_len:%d",recv_len);
-	} 
-
-	return c;
+	//return wl_sio_recv(fd);
+	return -1;
 }
 
 /**
@@ -112,24 +82,10 @@ u8_t sio_recv(sio_fd_t fd)
  * @note This function will block until data can be received. The blocking
  * can be cancelled by calling sio_read_abort().
  */
+//slipif and pppos need it
 u32_t sio_read(sio_fd_t fd, u8_t *data, u32_t len)
 {
-	int recv_len;
-	sio_t *s = (sio_t *)fd;
-	
-	RDIAG(SIO_DEBUG);
-
-	if(fd == NULL) {
-		RERR();
-		return 0;
-	}
-	
-	recv_len = uart_rx_sleep(s->channel, (char *)data, len);
-	if(recv_len < 0) {
-		RERR("recv_len:%d",recv_len);
-		return 0;
-	} else
-		return recv_len;
+	return wl_sio_read(fd, data, len);
 }
 
 /**
@@ -141,13 +97,10 @@ u32_t sio_read(sio_fd_t fd, u8_t *data, u32_t len)
  * @param len maximum length (in bytes) of data to receive
  * @return number of bytes actually received
  */
+//only slipif.c need this function
 u32_t sio_tryread(sio_fd_t fd, u8_t *data, u32_t len)
 {
-	sio_t *s = (sio_t *)fd;
-	
-	RDIAG(SIO_DEBUG);
-
-	return uart_rx(s->channel, (char *)data, len);
+	return wl_sio_tryread(fd, data, len);
 }
 
 /**
@@ -160,22 +113,10 @@ u32_t sio_tryread(sio_fd_t fd, u8_t *data, u32_t len)
  * 
  * @note This function will block until all data can be sent.
  */
+//pppos need this function
 u32_t sio_write(sio_fd_t fd, u8_t *data, u32_t len)
 {
-	int ret;
-	int sent_len = 0;
-	sio_t *s = (sio_t *)fd;
-
-	RDIAG(SIO_DEBUG,"write %d bytes",len);
-	
-	ret = uart_tx_sleep(s->channel,(char *)data, len);
-	RDIAG(SIO_DEBUG,"uart %d ret:%d", s->channel, ret);
-	if(ret < 0) {
-		RERR("ret:%d",ret);
-		return 0;
-	}
-
-	return len - ret;
+	return wl_sio_write(fd, data, len);
 }
 
 /**
@@ -183,10 +124,8 @@ u32_t sio_write(sio_fd_t fd, u8_t *data, u32_t len)
  * 
  * @param fd serial device handle
  */
+//pppos need this function
 void sio_read_abort(sio_fd_t fd)
 {
-	sio_t *s = (sio_t *)fd;
-
-	RDIAG(SIO_DEBUG,"uart_sleep_abort(%d)",s->channel);
-	uart_sleep_abort(s->channel);
+	return wl_sio_read_abort(fd);
 }
